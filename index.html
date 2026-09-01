@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Digital Clock</title>
+<title>Day Finder</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
@@ -19,104 +19,95 @@
     border: 1px solid rgba(255,255,255,0.08);
     backdrop-filter: blur(10px);
     border-radius: 24px;
-    padding: 48px 56px;
+    padding: 44px 48px;
     text-align:center;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    min-width: 340px;
+    min-width: 320px;
   }
-  .time {
-    font-size: 4rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    background: linear-gradient(90deg,#7fd8ff,#a78bfa);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    font-variant-numeric: tabular-nums;
-  }
-  .date {
-    margin-top: 10px;
-    font-size: 1.25rem;
+  h1 {
+    font-size: 1.4rem;
+    margin-bottom: 24px;
     color: #cfd3ff;
     letter-spacing: 1px;
   }
-  .divider {
-    margin: 24px 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  }
-  .stats {
+  .inputs {
     display:flex;
-    gap: 24px;
+    gap: 10px;
     justify-content:center;
+    margin-bottom: 20px;
   }
-  .stat {
-    background: rgba(255,255,255,0.05);
-    border-radius: 14px;
-    padding: 16px 20px;
-    min-width: 130px;
+  input {
+    width: 70px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    text-align:center;
+    font-size: 1rem;
   }
-  .stat .num {
-    font-size: 1.8rem;
-    font-weight:700;
-    color:#7fd8ff;
+  input#year { width: 90px; }
+  input::placeholder { color: #8b8fa8; }
+  button {
+    padding: 10px 26px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(90deg,#7fd8ff,#a78bfa);
+    color: #0a0a1a;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 1rem;
   }
-  .stat .label {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #9ca3af;
-    margin-top:4px;
+  button:hover { opacity: 0.9; }
+  .result {
+    margin-top: 24px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #7fd8ff;
+    min-height: 2rem;
+  }
+  .error {
+    color: #ff8080;
+    font-size: 0.95rem;
+    margin-top: 8px;
   }
 </style>
 </head>
 <body>
   <div class="card">
-    <div class="time" id="time">--:--:--</div>
-    <div class="date" id="date">Loading date...</div>
-    <div class="divider"></div>
-    <div class="stats">
-      <div class="stat">
-        <div class="num" id="daysToMonth">-</div>
-        <div class="label">Days to next month</div>
-      </div>
-      <div class="stat">
-        <div class="num" id="daysToYear">-</div>
-        <div class="label">Days to next year</div>
-      </div>
+    <h1>Find the Day of the Week</h1>
+    <div class="inputs">
+      <input type="number" id="day" placeholder="DD" min="1" max="31">
+      <input type="number" id="month" placeholder="MM" min="1" max="12">
+      <input type="number" id="year" placeholder="YYYY" min="1" max="9999">
     </div>
+    <button onclick="findDay()">Find Day</button>
+    <div class="result" id="result"></div>
   </div>
 
 <script>
-function updateClock() {
-  const now = new Date();
+function findDay() {
+  const day = parseInt(document.getElementById('day').value);
+  const month = parseInt(document.getElementById('month').value);
+  const year = parseInt(document.getElementById('year').value);
+  const resultEl = document.getElementById('result');
 
-  // Time
-  const h = String(now.getHours()).padStart(2,'0');
-  const m = String(now.getMinutes()).padStart(2,'0');
-  const s = String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('time').textContent = `${h}:${m}:${s}`;
+  if (!day || !month || !year || month < 1 || month > 12 || day < 1 || day > 31) {
+    resultEl.innerHTML = '<span class="error">Please enter a valid date</span>';
+    return;
+  }
 
-  // Date
-  const options = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
-  document.getElementById('date').textContent = now.toLocaleDateString(undefined, options);
+  const date = new Date(year, month - 1, day);
 
-  // Days left in current month
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth()+1, 1);
-  const msToMonthEnd = endOfMonth - now;
-  const daysToMonth = Math.ceil(msToMonthEnd / (1000*60*60*24));
+  // Validate the date actually exists (e.g. reject Feb 30)
+  if (date.getMonth() !== month - 1 || date.getDate() !== day) {
+    resultEl.innerHTML = '<span class="error">This date does not exist</span>';
+    return;
+  }
 
-  // Days left in current year
-  const endOfYear = new Date(now.getFullYear()+1, 0, 1);
-  const msToYearEnd = endOfYear - now;
-  const daysToYear = Math.ceil(msToYearEnd / (1000*60*60*24));
-
-  document.getElementById('daysToMonth').textContent = daysToMonth;
-  document.getElementById('daysToYear').textContent = daysToYear;
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  resultEl.textContent = days[date.getDay()];
 }
-
-updateClock();
-setInterval(updateClock, 1000);
 </script>
 </body>
 </html>
